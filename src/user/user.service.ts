@@ -138,10 +138,16 @@ export class UserService {
 
   async profile(user: User) {
     try {
+      const findUser = await this.userRepository.findOne({
+        select: ['nickname'],
+        where: { account_id: user.account_id },
+      });
+
+      const role = user.role === 0 ? 'user' : 'admin';
       return {
         account_id: user.account_id,
-        nickname: user.nickname,
-        role: user.role,
+        nickname: findUser.nickname,
+        role,
       };
     } catch (error) {
       console.error(error);
