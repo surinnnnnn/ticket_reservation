@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 
 import { Role } from '../types/userRole.type';
+import { PaymentMethod } from './paymentMethod.entity';
 
 @Index('account_id', ['account_id'], { unique: true }) //@index(인덱스명, [인덱스 지정할 컬럼명])
 @Entity({
@@ -28,4 +29,11 @@ export class User {
 
   @Column({ type: 'enum', enum: Role, default: Role.User }) //기본 타입 유저
   role: Role;
+
+  /**
+   * 1 : M 관계 설정
+   * @OneToMany
+   */
+  @OneToMany(() => PaymentMethod, (paymentMethod) => paymentMethod.user)
+  paymentMethod: PaymentMethod[];
 }

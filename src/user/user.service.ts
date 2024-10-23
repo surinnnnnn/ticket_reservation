@@ -2,6 +2,7 @@ import { compare, hash } from 'bcrypt';
 import _ from 'lodash';
 import { Admin, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
+import { CryptoService } from '../crypto/crypto.service';
 import { Role } from './types/userRole.type';
 
 import {
@@ -15,6 +16,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { User } from './entities/user.entity';
+import { PaymentMethod } from './entities/paymentMethod.entity';
 
 @Injectable()
 export class UserService {
@@ -24,8 +26,11 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(PaymentMethod)
+    private paymentMethodReposytory: Repository<PaymentMethod>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private cryptoService: CryptoService,
   ) {}
 
   async register(
@@ -75,6 +80,9 @@ export class UserService {
     }
   }
 
+  async findByAccountId(account_id: string) {
+    return await this.userRepository.findOneBy({ account_id });
+  }
   // 로그인
   async login(account_id: string, password: string) {
     const MAX_ATTEMPTS = 3;
@@ -127,6 +135,7 @@ export class UserService {
 
       const payload = { account_id, sub: user.id };
       const token = this.jwtService.sign(payload);
+      // res.header('authorization', `Bearer ${token}`);
       return {
         access_token: token,
       };
@@ -136,6 +145,7 @@ export class UserService {
     }
   }
 
+  // 프로필 조회
   async profile(user: User) {
     try {
       const findUser = await this.userRepository.findOne({
@@ -155,7 +165,28 @@ export class UserService {
     }
   }
 
-  async findByAccountId(account_id: string) {
-    return await this.userRepository.findOneBy({ account_id });
+  // 결제 수단 등록
+  async registerPayment(
+    user: User,
+    card_number: string,
+    expiration_date: string,
+    cvv: string,
+  ) {
+    try {
+      // crypto 로 암호화 해서 저장
+      console.log('user:', user);
+      const encryptedCardNumber = this.cryptoService.encrypt(card_number);
+      const encryptedCvv = this.cryptoService.encrypt(cvv);
+
+      await this.paymentMethodReposytory.save({
+        user: user,
+        card_number: encryptedCardNumber,
+        expiration_date,
+        cvv: encryptedCvv,
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 }

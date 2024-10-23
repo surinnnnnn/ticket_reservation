@@ -4,6 +4,7 @@ import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 import { LoginDto } from './dto/login.dto';
+import { PaymentMethodDto } from './dto/paymentMethod.dto.';
 import { RegisterDto } from './dto/register.dto';
 import { User } from './entities/user.entity';
 import { UserService } from './user.service';
@@ -31,6 +32,21 @@ export class UserController {
   @UseGuards(AuthGuard('jwt'))
   @Get('profile')
   async profile(@UserInfo() user: User) {
+    // 인증된 사용자 정보 로드함
     return await this.userService.profile(user);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('registerPayment')
+  async registerPayment(
+    @UserInfo() user: User,
+    @Body() paymentMethodDto: PaymentMethodDto,
+  ) {
+    return await this.userService.registerPayment(
+      user,
+      paymentMethodDto.card_number,
+      paymentMethodDto.expiration_date,
+      paymentMethodDto.cvv,
+    );
   }
 }

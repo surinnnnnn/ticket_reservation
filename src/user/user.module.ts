@@ -4,8 +4,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { User } from './entities/user.entity';
+import { PaymentMethod } from './entities/paymentMethod.entity';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { CryptoService } from '../crypto/crypto.service';
 
 @Module({
   imports: [
@@ -15,9 +17,9 @@ import { UserService } from './user.service';
       }),
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, PaymentMethod]),
   ],
-  providers: [UserService],
+  providers: [UserService, CryptoService],
   controllers: [UserController],
   exports: [UserService],
 })
