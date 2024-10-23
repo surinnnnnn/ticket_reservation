@@ -42,4 +42,14 @@ export class CryptoService {
 
     return decrypted.toString('utf-8');
   }
+
+  hashCardNumber(cardNumber: string): string {
+    const normalizedCardNumber = cardNumber
+      .replace(/\s+/g, '')
+      .replace(/-/g, '');
+    return crypto
+      .createHash('sha256')
+      .update(normalizedCardNumber)
+      .digest('hex');
+  }
 }

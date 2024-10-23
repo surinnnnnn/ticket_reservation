@@ -21,6 +21,14 @@ export class PaymentMethod {
   })
   card_number: string;
 
+  @Column({
+    type: 'varchar',
+    length: 255,
+    unique: true,
+    nullable: false,
+  })
+  card_hash: string;
+
   @Column({ type: 'varchar', length: 4, select: false, nullable: false })
   expiration_date: string;
 
