@@ -20,6 +20,12 @@ export class Class {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'int', nullable: false })
+  grade: number;
+
+  @Column({ type: 'int', nullable: false })
+  price: number;
+
   /**
    * M : 1 관계 설정
    * @ManyToOne
@@ -29,10 +35,9 @@ export class Class {
   concert: Concert;
 
   /**
-   * 1 : 1 관계 설정
-   * @OneToOne
+   * 1 : N 관계 설정
+   * @OneToMany
    */
-  @OneToOne(() => Seat, (seat) => seat.class)
-  @JoinColumn({ name: 'seat_id', referencedColumnName: 'id' })
-  seat: Seat;
+  @OneToMany(() => Seat, (seat) => seat.class)
+  seats: Seat[];
 }

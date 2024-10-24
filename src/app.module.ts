@@ -19,6 +19,7 @@ import { Hall } from './admin/entities/hall.entity';
 import { HallReservation } from './admin/entities/hallReservation.entity';
 import { Seat } from './admin/entities/seat.entity';
 import { Class } from './admin/entities/class.entity';
+import { SearchModule } from './search/search.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (
@@ -68,6 +69,7 @@ const typeOrmModuleOptions = {
     UserModule,
     CryptoModule,
     AdminModule,
+    SearchModule,
   ],
   controllers: [],
   providers: [],

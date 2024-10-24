@@ -12,7 +12,7 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
 import { ConcertCategory } from './entities/concertCategory.enitity';
@@ -166,24 +166,112 @@ export class AdminService {
     }
   }
 
-  //   async postSeat(
-  //     hall_id: number,
-  //     capacity: number,
-  //     capacity_group_by_grade: object,
-  //   ): Promise<Seat> {
-  //     const newSeat = this.seatRepository.create({
-  //       hall_id,
-  //       capacity,
-  //       capacity_group_by_grade,
-  //     });
-  //     return await this.seatRepository.save(newSeat);
-  //   }
+  /** 공연 홀 예약 함수
+   *
+   */
+  async postHallreservation(hall_id: number, schedule_id: number) {
+    try {
+      const findHall = await this.hallRepository.findOne({
+        where: { id: hall_id },
+      });
+      if (!findHall) {
+        throw new BadRequestException('해당 공연 홀이 존재하지 않습니다.');
+      }
 
-  //   async postClass(concert_id: number, price_by_grade: object): Promise<Class> {
-  //     const newClass = this.classRepository.create({
-  //       concert_id,
-  //       price_by_grade,
-  //     });
-  //     return await this.classRepository.save(newClass);
-  //   }
+      const findSchedule = await this.scheduleRepository.findOne({
+        where: { id: schedule_id },
+      });
+      if (!findSchedule) {
+        throw new BadRequestException('해당 공연 스케쥴이 존재하지 않습니다.');
+      }
+
+      const newHallReservation = this.hallReservationRepository.create({
+        hall: findHall,
+        schedule: findSchedule,
+      });
+      await this.hallReservationRepository.save(newHallReservation);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  /** 좌석 저장 함수
+   *
+   * @param hall_id
+   * @param capacity
+   * @param capacity_group_by_grade
+   * @returns
+   */
+  async postSeat(hall_id: number, class_id: number, concert_id: number) {
+    try {
+      const findHall = await this.hallRepository.findOne({
+        where: { id: hall_id },
+      });
+      if (!findHall) {
+        throw new BadRequestException('해당 공연 홀이 존재하지 않습니다.');
+      }
+
+      const findClass = await this.classRepository.findOne({
+        where: { id: class_id },
+        relations: ['concert'], //concert 정보 불러옴
+      });
+      if (!findClass) {
+        throw new BadRequestException('해당 좌석 등급이 존재하지 않습니다.');
+      }
+      if (findClass.concert.id !== concert_id) {
+        throw new BadRequestException(
+          '해당 콘서트에 있는 좌석 등급이 아닙니다.',
+        );
+      }
+      const newSeat = this.seatRepository.create({
+        hall: findHall,
+        class: findClass,
+      });
+      return await this.seatRepository.save(newSeat);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  /**등급 저장 함수
+   *
+   * @param concert_id
+   * @param price_by_grade
+   * @returns
+   */
+  async postClass(
+    concert_id: number,
+    price_by_grade: [{ grade: number; price: number }],
+  ) {
+    try {
+      const findConcert = await this.concertRepository.findOne({
+        where: { id: concert_id },
+      });
+
+      if (!findConcert) {
+        throw new BadRequestException('해당 공연이 존재하지 않습니다.');
+      }
+
+      for (const priceAndGrade of price_by_grade) {
+        const newClass = this.classRepository.create({
+          concert: findConcert,
+          price: priceAndGrade.price,
+          grade: priceAndGrade.grade,
+        });
+        await this.classRepository.save(newClass);
+      }
+
+      return {
+        statusCode: 201,
+        message: '좌석등급이 등록되었습니다.',
+        concert_id,
+        price_by_grade,
+      };
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
 }

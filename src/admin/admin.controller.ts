@@ -5,6 +5,7 @@ import { PostCategoryDto } from './dto/postCategory.dto';
 import { PostConcertDto } from './dto/postConcert.dto'; // 철자 수정
 import { PostSeatDto } from './dto/postSeat.dto';
 import { PostClassDto } from './dto/postClass.dto';
+import { PostHallReservationDto } from './dto/postHallReservation.dto';
 
 import { AdminService } from './admin.service';
 
@@ -35,22 +36,33 @@ export class AdminController {
     );
   }
 
-  //   @UseGuards(AuthGuard('jwt'))
-  //   @Post('postSeat')
-  //   async postSeat(@Body() postSeatDto: PostSeatDto) {
-  //     return await this.adminService.postSeat(
-  //       postSeatDto.hall_id,
-  //       postSeatDto.capacity,
-  //       postSeatDto.capacity_group_by_grade,
-  //     );
-  //   }
+  @UseGuards(AuthGuard('jwt'))
+  @Post('postConcert')
+  async postHallreservation(
+    @Body() postHallreservationDto: PostHallReservationDto,
+  ) {
+    return await this.adminService.postHallreservation(
+      postHallreservationDto.hall_id,
+      postHallreservationDto.schedule_id,
+    );
+  }
 
-  //   @UseGuards(AuthGuard('jwt'))
-  //   @Post('postClass')
-  //   async postClass(@Body() postClassDto: PostClassDto) {
-  //     return await this.adminService.postClass(
-  //       postClassDto.concert_id,
-  //       postClassDto.price_by_grade,
-  //     );
-  //   }
+  @UseGuards(AuthGuard('jwt'))
+  @Post('postSeat')
+  async postSeat(@Body() postSeatDto: PostSeatDto) {
+    return await this.adminService.postSeat(
+      postSeatDto.hall_id,
+      postSeatDto.class_id,
+      postSeatDto.concert_id,
+    );
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('postClass')
+  async postClass(@Body() postClassDto: PostClassDto) {
+    return await this.adminService.postClass(
+      postClassDto.concert_id,
+      postClassDto.price_by_grade,
+    );
+  }
 }
