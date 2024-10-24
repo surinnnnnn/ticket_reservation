@@ -173,13 +173,24 @@ export class UserService {
     cvv: string,
   ) {
     try {
+      const cardHash = this.cryptoService.hashCardNumber(card_number);
+
+      // 해시된 카드 번호로 중복거르기
+      const existingPaymentMethod = await this.paymentMethodReposytory.findOne({
+        where: { card_hash: cardHash }, // card_hash 칼럼 만들기(+)
+      });
+
+      if (existingPaymentMethod) {
+        throw new ConflictException('이미 사용되고 있는 카드입니다.');
+      }
+
       // crypto 로 암호화 해서 저장
-      console.log('user:', user);
       const encryptedCardNumber = this.cryptoService.encrypt(card_number);
       const encryptedCvv = this.cryptoService.encrypt(cvv);
 
       await this.paymentMethodReposytory.save({
         user: user,
+        card_hash: cardHash,
         card_number: encryptedCardNumber,
         expiration_date,
         cvv: encryptedCvv,

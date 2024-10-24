@@ -4,13 +4,22 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-
-import { AuthModule } from './auth/auth.module';
-import { User } from './user/entities/user.entity';
 import { UserModule } from './user/user.module';
-import { CryptoModule } from './crypto/crypto.module';
-import { PaymentMethod } from './user/entities/paymentMethod.entity';
+import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
+import { CryptoModule } from './crypto/crypto.module';
+
+import { User } from './user/entities/user.entity';
+import { PaymentMethod } from './user/entities/paymentMethod.entity';
+import { Category } from './admin/entities/category.entity';
+import { ConcertCategory } from './admin/entities/concertCategory.enitity';
+import { Concert } from './admin/entities/concert.entity';
+import { Schedule } from './admin/entities/schedules.entity';
+import { Hall } from './admin/entities/hall.entity';
+import { HallReservation } from './admin/entities/hallReservation.entity';
+import { Seat } from './admin/entities/seat.entity';
+import { Class } from './admin/entities/class.entity';
+import { SearchModule } from './search/search.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (
@@ -23,7 +32,18 @@ const typeOrmModuleOptions = {
     host: configService.get('DB_HOST'),
     port: configService.get('DB_PORT'),
     database: configService.get('DB_NAME'),
-    entities: [User, PaymentMethod], // 엔티티는 반드시 여기에 명시!
+    entities: [
+      User,
+      PaymentMethod,
+      Category,
+      ConcertCategory,
+      Concert,
+      Schedule,
+      Hall,
+      HallReservation,
+      Seat,
+      Class,
+    ], // 엔티티는 반드시 여기에 명시!
     synchronize: configService.get('DB_SYNC'),
     logging: true,
   }),
@@ -49,6 +69,7 @@ const typeOrmModuleOptions = {
     UserModule,
     CryptoModule,
     AdminModule,
+    SearchModule,
   ],
   controllers: [],
   providers: [],
