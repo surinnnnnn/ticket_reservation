@@ -51,7 +51,7 @@ export class AdminController {
   @Post('postSeat')
   async postSeat(@Body() postSeatDto: PostSeatDto) {
     return await this.adminService.postSeat(
-      postSeatDto.hall_id,
+      postSeatDto.hall_reservation_id,
       postSeatDto.class_id,
       postSeatDto.concert_id,
     );

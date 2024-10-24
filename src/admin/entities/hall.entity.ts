@@ -22,20 +22,13 @@ export class Hall {
   @Column({ type: 'int', select: false, nullable: false })
   venue_id: number;
 
-  @Column({ type: 'varchar', select: false, nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   name: string;
 
   /**
    * 1 : M 관계 설정
    * @OneToMany
    */
-  @OneToMany(() => HallReservation, (hallRrservation) => hallRrservation.hall)
-  hallRrservations: HallReservation[];
-
-  /**
-   * 1 : M 관계 설정
-   * @OneToMany
-   */
-  @OneToMany(() => Seat, (seat) => seat.hall)
-  seat: Seat[];
+  @OneToMany(() => HallReservation, (hallReservations) => hallReservations.hall)
+  hallReservations: HallReservation[];
 }

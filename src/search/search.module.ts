@@ -4,7 +4,8 @@ import { JwtModule } from '@nestjs/jwt';
 
 import { ConfigService } from '@nestjs/config';
 import { SearchService } from './search.service';
-import { AdminService } from 'src/admin/admin.service';
+
+import { SearchController } from './search.controller';
 
 import { ConcertCategory } from '../admin/entities/concertCategory.enitity';
 import { Concert } from '../admin/entities/concert.entity';
@@ -29,10 +30,9 @@ import { Class } from '../admin/entities/class.entity';
       Seat,
       Class,
     ]),
-    AdminService,
   ],
   providers: [SearchService],
   exports: [SearchService],
-  controllers: [SearchService],
+  controllers: [SearchController],
 })
 export class SearchModule {}

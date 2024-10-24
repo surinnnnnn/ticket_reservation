@@ -38,6 +38,6 @@ export class Class {
    * 1 : N 관계 설정
    * @OneToMany
    */
-  @OneToMany(() => Seat, (seat) => seat.class)
+  @OneToMany(() => Seat, (seats) => seats.class)
   seats: Seat[];
 }
