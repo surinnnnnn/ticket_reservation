@@ -34,7 +34,7 @@ export class Schedule {
    */
   @OneToMany(
     () => HallReservation,
-    (hallRrservation) => hallRrservation.schedule,
+    (hallReservation) => hallReservation.schedule,
   )
-  hallRrservations: HallReservation[];
+  hallReservations: HallReservation[];
 }

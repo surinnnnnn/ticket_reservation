@@ -18,7 +18,7 @@ export class Category {
   @Column({ type: 'varchar', nullable: false })
   name: string;
 
-  @Column({ type: 'varchar', length: 255, select: false, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   description: string;
 
   /**

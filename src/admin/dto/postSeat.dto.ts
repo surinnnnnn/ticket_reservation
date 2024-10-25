@@ -10,8 +10,8 @@ import { isNumber } from 'lodash';
 
 export class PostSeatDto {
   @IsNumber()
-  @IsNotEmpty({ message: '공연 홀 아이디를 입력하세요.' })
-  hall_id: number;
+  @IsNotEmpty({ message: '공연 홀 예약번호를 입력하세요.' })
+  hall_reservation_id: number;
 
   @IsNumber()
   @IsNotEmpty({ message: '콘서트 아이디를 입력해주세요.' })

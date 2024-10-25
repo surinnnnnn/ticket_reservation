@@ -203,13 +203,17 @@ export class AdminService {
    * @param capacity_group_by_grade
    * @returns
    */
-  async postSeat(hall_id: number, class_id: number, concert_id: number) {
+  async postSeat(
+    hall_reservation_id: number,
+    class_id: number,
+    concert_id: number,
+  ) {
     try {
-      const findHall = await this.hallRepository.findOne({
-        where: { id: hall_id },
+      const findHallReservation = await this.hallReservationRepository.findOne({
+        where: { id: hall_reservation_id },
       });
-      if (!findHall) {
-        throw new BadRequestException('해당 공연 홀이 존재하지 않습니다.');
+      if (!findHallReservation) {
+        throw new BadRequestException('공연 홀 예약 정보가 존재하지 않습니다.');
       }
 
       const findClass = await this.classRepository.findOne({
@@ -225,7 +229,7 @@ export class AdminService {
         );
       }
       const newSeat = this.seatRepository.create({
-        hall: findHall,
+        hallReservation: findHallReservation,
         class: findClass,
       });
       return await this.seatRepository.save(newSeat);

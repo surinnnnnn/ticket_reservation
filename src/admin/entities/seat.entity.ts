@@ -10,9 +10,9 @@ import {
   Unique,
 } from 'typeorm';
 
-import { Hall } from './hall.entity';
 import { Class } from './class.entity';
 import { isString } from 'lodash';
+import { HallReservation } from './hallReservation.entity';
 
 @Entity({
   name: 'seats',
@@ -28,9 +28,9 @@ export class Seat {
    * M : 1 관계 설정
    * @ManyToOne
    */
-  @ManyToOne(() => Hall, (hall) => hall.seat)
-  @JoinColumn({ name: 'hall_id', referencedColumnName: 'id' })
-  hall: Hall;
+  @ManyToOne(() => HallReservation, (hallReservation) => hallReservation.seats)
+  @JoinColumn({ name: 'hall_Reservation_id', referencedColumnName: 'id' })
+  hallReservation: HallReservation;
 
   /**
    * M : 1 관계 설정

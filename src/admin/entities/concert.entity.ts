@@ -19,10 +19,10 @@ export class Concert {
   @Column({ type: 'varchar', nullable: false })
   name: string;
 
-  @Column({ type: 'varchar', length: 255, select: false, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   description: string;
 
-  @Column({ type: 'varchar', select: false, nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   image: string; //url 로 저장한다 가정
 
   /**
@@ -31,7 +31,7 @@ export class Concert {
    */
   @OneToMany(
     () => ConcertCategory,
-    (concertCategory) => concertCategory.concert,
+    (concertCategories) => concertCategories.concert,
   )
   concertCategories: ConcertCategory[];
 
@@ -39,7 +39,7 @@ export class Concert {
    * 1 : M 관계 설정
    * @OneToMany
    */
-  @OneToMany(() => Schedule, (schedule) => schedule.concert)
+  @OneToMany(() => Schedule, (schedules) => schedules.concert)
   schedules: Schedule[];
 
   /**
