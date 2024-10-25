@@ -39,7 +39,7 @@ export class Payment {
   // 1 : 1 결제 수단
   @OneToOne(() => PaymentMethod, (paymentMethod) => paymentMethod.payment)
   @JoinColumn({ name: 'method_id', referencedColumnName: 'id' })
-  paymentMethod: PaymentMethod[];
+  paymentMethod: PaymentMethod;
 
   //M : 1 유저
   @ManyToOne(() => User, (user) => user.payments)

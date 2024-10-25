@@ -27,6 +27,6 @@ export class Reservation {
   payment: Payment;
 
   //M : 1 공연
-  @OneToOne(() => Concert, (concert) => concert.reservations)
+  @ManyToOne(() => Concert, (concert) => concert.reservations)
   concert: Concert;
 }

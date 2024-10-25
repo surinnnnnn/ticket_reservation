@@ -1,22 +1,16 @@
 import _ from 'lodash';
-import { Admin, Repository } from 'typeorm';
+import { Repository, Transaction, DataSource } from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
   Injectable,
-  InternalServerErrorException,
-  UnauthorizedException,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { Category } from '../admin/entities/category.entity';
-import { ConcertCategory } from '../admin/entities/concertCategory.enitity';
+
 import { Concert } from '../admin/entities/concert.entity';
 import { Schedule } from '../admin/entities/schedules.entity';
-import { HallReservation } from '../admin/entities/hallReservation.entity';
-import { Hall } from '../admin/entities/hall.entity';
 import { Seat } from '../admin/entities/seat.entity';
-import { Class } from '../admin/entities/class.entity';
 import { Payment } from './entities/payments.entity';
 import { Reservation } from './entities/reservations.entity';
 import { User } from '../user/entities/user.entity';
@@ -24,36 +18,24 @@ import { User } from '../user/entities/user.entity';
 @Injectable()
 export class ReservationService {
   constructor(
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
-
-    @InjectRepository(ConcertCategory)
-    private readonly concertCategoryRepository: Repository<ConcertCategory>,
-
     @InjectRepository(Concert)
     private readonly concertRepository: Repository<Concert>,
 
     @InjectRepository(Schedule)
     private readonly scheduleRepository: Repository<Schedule>,
 
-    @InjectRepository(HallReservation)
-    private readonly hallReservationRepository: Repository<HallReservation>,
-
-    @InjectRepository(Hall)
-    private readonly hallRepository: Repository<Hall>,
-
     @InjectRepository(Seat)
     private readonly seatRepository: Repository<Seat>,
-
-    @InjectRepository(Class)
-    private readonly classRepository: Repository<Class>,
 
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
 
     @InjectRepository(Reservation)
-    private readonly reservation: Repository<Reservation>,
+    private readonly reservationRepository: Repository<Reservation>,
+
+    private dataSource: DataSource,
   ) {}
+
   async makeReservation(
     user: User,
     concert_name: string,
@@ -61,56 +43,98 @@ export class ReservationService {
     seat_id: number,
     payment_method_id: number,
   ) {
-    const findSeat = await this.seatRepository.findOne({
-      where: { id: schedule_id },
-      relations: { class: true },
-      select: {
-        state: true,
-        class: {
-          id: true,
-          grade: true,
-          price: true,
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const findConcert = await this.concertRepository.findOne({
+        where: { name: concert_name },
+      });
+      if (!findConcert) {
+        throw new BadRequestException(
+          '해당 이름의 콘서트가 존재 하지 않습니다.',
+        );
+      }
+
+      const findSchedule = await this.scheduleRepository.findOne({
+        where: { id: schedule_id },
+      });
+      if (!findSchedule) {
+        throw new BadRequestException('존재 하지 않는 스케쥴입니다.');
+      }
+
+      const findSeat = await this.seatRepository
+        .createQueryBuilder('seat')
+        .leftJoinAndSelect('seat.class', 'class')
+        .where('seat.id = :seat_id', { seat_id })
+        .select(['seat.state', 'class.id', 'class.grade', 'class.price'])
+        .getOne();
+      if (!findSeat) {
+        throw new BadRequestException({
+          message: '해당 좌석이 존재하지 않습니다.',
+        });
+      }
+      if (findSeat.state === '예매 불가') {
+        throw new ConflictException('이미 선택된 좌석입니다.');
+      }
+
+      //결제요청
+      const paymentRequest = {
+        concert_name: concert_name,
+        seat_id: seat_id,
+        amount: findSeat.class.price,
+        method_id: payment_method_id,
+      };
+      const paymentResult = await this.payment(paymentRequest);
+
+      if (!paymentResult.success) {
+        throw new ConflictException(
+          '결제에 실패하였습니다. 다시 시도해 주세요.',
+        );
+      }
+
+      findSeat.state = '예매 불가';
+      await this.seatRepository.update(seat_id, { state: findSeat.state });
+
+      //결제 내역 저장
+      const payment = this.paymentRepository.create({
+        cost: findSeat.class.price,
+        paymentMethod: { id: payment_method_id },
+        state: '결제 완료',
+        user: { id: user.id },
+        approve_number: paymentResult.approve_number,
+        approvedAt: paymentResult.approve_time,
+      });
+
+      const savedPayment = await this.paymentRepository.save(payment);
+
+      //예약 정보 저장
+      const reservation = this.reservationRepository.create({
+        seat: { id: seat_id },
+        concert: { id: findConcert.id },
+        payment: { id: savedPayment.id },
+      });
+
+      const savedReservation =
+        await this.reservationRepository.save(reservation);
+
+      return {
+        status_code: 201,
+        message: '예약이 완료되었습니다.',
+        reservation_info: {
+          concert_name,
+          date: findSchedule.date,
+          seat_id: seat_id,
         },
-      },
-    });
-    if (!findSeat) {
-      throw new BadRequestException({
-        message: '해당 좌석이 존재하지 않습니다.',
-      });
+      };
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
-    if (findSeat.state === '예매 불가') {
-      throw new ConflictException({ message: '이미 선택된 좌석입니다.' });
-    }
-
-    //결제요청(임의)
-    const paymentRequest = {
-      concert_name: concert_name,
-      seat_id: seat_id,
-      amount: findSeat.class.price,
-      method_id: payment_method_id,
-    };
-    const paymentResult = await this.payment(paymentRequest);
-
-    if (paymentResult.success!) {
-      throw new ConflictException({
-        message: '결제에 실패하였습니다. 다시 시도해 주세요.',
-      });
-    }
-
-    findSeat.state = '예매 불가';
-    await this.seatRepository.save({
-      state: findSeat.state,
-    });
-
-    //결제 내역 저장
-    const payment = this.paymentRepository.create({
-      cost: findSeat.class.price,
-      method_id: payment_method_id,
-      state: '결제 완료',
-      user_id: user.id,
-      approve_numbers: paymentResult.approve_number,
-      approvedAt: paymentResult.approve_time,
-    });
   }
 
   /**임의 결제 함수
@@ -126,7 +150,8 @@ export class ReservationService {
   }) {
     return {
       success: true,
-      approve_number: Math.random,
+      approve_number:
+        Math.floor(Math.random() * (10 ** 6 - 10 ** 5 + 1)) + 10 ** 5,
       approve_time: new Date(),
     };
   }

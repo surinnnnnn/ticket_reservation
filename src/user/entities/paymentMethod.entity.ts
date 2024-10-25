@@ -42,6 +42,5 @@ export class PaymentMethod {
   user: User;
 
   @OneToOne(() => Payment, (payment) => payment.paymentMethod)
-  @JoinColumn({ name: 'payment_id', referencedColumnName: 'id' })
   payment: Payment;
 }

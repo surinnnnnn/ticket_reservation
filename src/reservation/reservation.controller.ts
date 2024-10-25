@@ -3,6 +3,7 @@ import { SearchService } from '../search/search.service';
 import { ReservationService } from './reservation.service';
 import { AuthGuard } from '@nestjs/passport';
 import { MakeReservationDto } from './dto/makeReservation.dto';
+import { GetSeatsDto } from './dto/getSeats.dto';
 import { UserInfo } from 'src/utils/userInfo.decorator';
 import { User } from 'src/user/entities/user.entity';
 
@@ -15,18 +16,18 @@ export class ReservationController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('getConcertSeats')
-  async getConcertSeats(@Query() makeReservationDto: MakeReservationDto) {
+  async getConcertSeats(@Query() getSeatsDto: GetSeatsDto) {
     return await this.searchService.getConcertSeats(
-      makeReservationDto.concert_name,
-      makeReservationDto.schedule_id,
+      getSeatsDto.concert_name,
+      getSeatsDto.schedule_id,
     );
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Post('reservation')
+  @Post('makeReservation')
   async makeReservation(
     @UserInfo() user: User,
-    makeReservationDto: MakeReservationDto,
+    @Body() makeReservationDto: MakeReservationDto,
   ) {
     return await this.reservationService.makeReservation(
       user,

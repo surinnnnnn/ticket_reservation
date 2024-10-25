@@ -43,7 +43,6 @@ export class SearchService {
   /** 공연 목록 조회 함수
    *
    */
-
   async getConcerts() {
     try {
       const concerts = await this.concertRepository
