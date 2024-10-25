@@ -13,6 +13,7 @@ import {
 import { Class } from './class.entity';
 import { isString } from 'lodash';
 import { HallReservation } from './hallReservation.entity';
+import { Reservation } from 'src/reservation/entities/reservations.entity';
 
 @Entity({
   name: 'seats',
@@ -21,7 +22,11 @@ export class Seat {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'enum', enum: ['예약 중', '예약 전'], default: '예약 전' })
+  @Column({
+    type: 'enum',
+    enum: ['예매 불가', '예매 가능'],
+    default: '예매 가능',
+  })
   state: string;
 
   /**
@@ -33,19 +38,17 @@ export class Seat {
   hallReservation: HallReservation;
 
   /**
-   * M : 1 관계 설정
-   * @ManyToOne
+   * 1 : 1 관계 설정
+   * @OneToOne
    */
-  @ManyToOne(() => Class, (classEntity) => classEntity.seats)
+  @OneToOne(() => Class, (classEntity) => classEntity.seats)
   @JoinColumn({ name: 'class_id', referencedColumnName: 'id' })
   class: Class;
 
-  // 추후 reservation 연결
-  //   /**
-  //    * 1 : 1 관계 설정
-  //    * @OneToOne
-  //    */
-  //   @OneToOne(() => Class, (classEntity) => classEntity.seat)
-  //   @JoinColumn({ name: 'class_id', referencedColumnName: 'id' })
-  //   class: Class;
+  /**
+   * 1 : 1 관계 설정
+   * @OneToOne
+   */
+  @OneToOne(() => Reservation, (reservation) => reservation.seat)
+  reservation: Reservation;
 }

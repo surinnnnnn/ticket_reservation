@@ -9,6 +9,8 @@ import {
 import { ConcertCategory } from './concertCategory.enitity';
 import { Schedule } from './schedules.entity';
 import { Class } from './class.entity';
+import { Reservation } from 'src/reservation/entities/reservations.entity';
+
 @Entity({
   name: 'concerts',
 })
@@ -48,4 +50,11 @@ export class Concert {
    */
   @OneToMany(() => Class, (classEntity) => classEntity.concert)
   classies: Class[];
+
+  /**
+   * 1 : M 관계 설정
+   * @OneToMany
+   */
+  @OneToMany(() => Reservation, (reservations) => reservations.concert)
+  reservations: Reservation[];
 }

@@ -4,8 +4,10 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  OneToOne,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Payment } from 'src/reservation/entities/payments.entity';
 
 @Entity('payment_methods')
 export class PaymentMethod {
@@ -38,4 +40,8 @@ export class PaymentMethod {
   @ManyToOne(() => User, (user) => user.paymentMethod)
   @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
   user: User;
+
+  @OneToOne(() => Payment, (payment) => payment.paymentMethod)
+  @JoinColumn({ name: 'payment_id', referencedColumnName: 'id' })
+  payment: Payment;
 }

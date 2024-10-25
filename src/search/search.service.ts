@@ -6,6 +6,7 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  Query,
   UnauthorizedException,
 } from '@nestjs/common';
 
@@ -121,24 +122,33 @@ export class SearchService {
     }
   }
 
+  async fetchConcertDetails(concert_name: string, schedule_id?: number) {
+    const query = this.concertRepository
+      .createQueryBuilder('concert')
+      .leftJoinAndSelect('concert.concertCategories', 'concertCategories')
+      .leftJoinAndSelect('concertCategories.category', 'category')
+      .leftJoinAndSelect('concert.schedules', 'schedule')
+      .leftJoinAndSelect('schedule.hallReservations', 'hallReservations')
+      .leftJoinAndSelect('hallReservations.seats', 'seat')
+      .leftJoinAndSelect('hallReservations.hall', 'hall')
+      .leftJoinAndSelect('seat.class', 'class')
+      .where('concert.name = :name', { name: concert_name });
+
+    if (schedule_id) {
+      query.andWhere('schedule.id = :schedule', { schedule: schedule_id });
+    }
+    const concert = await query.getOne();
+
+    if (!concert) {
+      throw new BadRequestException('해당 공연이 존재하지 않습니다.');
+    }
+
+    return concert;
+  }
+
   async searchConcertDetails(concert_name: string) {
     try {
-      const concert = await this.concertRepository
-        .createQueryBuilder('concert')
-        .leftJoinAndSelect('concert.concertCategories', 'concertCategories') // 시리즈 및 카테고리
-        .leftJoinAndSelect('concertCategories.category', 'category') // 카테고리 상세
-        .leftJoinAndSelect('concert.schedules', 'schedule') // 스케줄
-        .leftJoinAndSelect('schedule.hallReservations', 'hallReservations') // 공연홀 예약 정보
-        .leftJoinAndSelect('hallReservations.seats', 'seat') // 공연홀
-        .leftJoinAndSelect('hallReservations.hall', 'hall') // 좌석 정보
-        .leftJoinAndSelect('seat.class', 'class') // 좌석 등급 정보
-        .where('concert.name = :name', { name: concert_name }) //where('concert.name = :name', {...})
-        .getOne();
-
-      if (!concert) {
-        throw new BadRequestException('해당 공연이 존재하지 않습니다.');
-      }
-
+      const concert = await this.fetchConcertDetails(concert_name);
       const mappedConcert = {
         id: concert.id,
         Image: concert.image,
@@ -151,7 +161,7 @@ export class SearchService {
           const availability = schedule.hallReservations.some(
             (reservation) =>
               Array.isArray(reservation.seats) &&
-              reservation.seats.some((seat) => seat.state === '예약 전'),
+              reservation.seats.some((seat) => seat.state === '예매 가능'),
           )
             ? '예매 가능'
             : '예매 불가';
@@ -169,6 +179,33 @@ export class SearchService {
       return {
         statusCode: 200,
         mappedConcert,
+      };
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  /** 좌석 조회 (수정 필요[-])
+   *
+   * @param concert_name
+   * @param schedule_id
+   * @returns
+   */
+  async getConcertSeats(concert_name: string, schedule_id: number) {
+    try {
+      const concert = await this.fetchConcertDetails(concert_name, schedule_id);
+
+      const mappedSeats = {
+        name: concert.name,
+        date: new Date(concert.schedules[0].date).toLocaleString(),
+        hall: concert.schedules[0].hallReservations[0].hall.name,
+        seats: concert.schedules[0].hallReservations[0].seats,
+      };
+      console.log(concert.schedules[0].hallReservations[0].seats);
+      return {
+        statusCode: 200,
+        mappedSeats,
       };
     } catch (error) {
       console.error(error);
