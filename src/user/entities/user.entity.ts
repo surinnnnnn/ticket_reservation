@@ -25,7 +25,7 @@ export class User {
   @Column({ type: 'varchar', select: false, nullable: false })
   password: string;
 
-  @Column({ type: 'varchar', select: false, nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   nickname: string;
 
   @Column({ type: 'enum', enum: Role, default: Role.User }) //기본 타입 유저

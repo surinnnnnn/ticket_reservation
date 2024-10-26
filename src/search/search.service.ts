@@ -201,7 +201,7 @@ export class SearchService {
         hall: concert.schedules[0].hallReservations[0].hall.name,
         seats: concert.schedules[0].hallReservations[0].seats,
       };
-      console.log(concert.schedules[0].hallReservations[0].seats);
+
       return {
         statusCode: 200,
         mappedSeats,

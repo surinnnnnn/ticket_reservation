@@ -24,7 +24,7 @@ export class Payment {
 
   @Column({
     type: 'enum',
-    enum: ['결제 처리 중', '결제 완료'],
+    enum: ['결제 처리 중', '결제 완료', '결제 취소'],
     default: '결제 처리 중',
     nullable: false,
   })
@@ -36,8 +36,8 @@ export class Payment {
   @Column({ type: 'timestamp', nullable: false })
   approvedAt: Date;
 
-  // 1 : 1 결제 수단
-  @OneToOne(() => PaymentMethod, (paymentMethod) => paymentMethod.payment)
+  // M : 1 결제 수단
+  @ManyToOne(() => PaymentMethod, (paymentMethod) => paymentMethod.payments)
   @JoinColumn({ name: 'method_id', referencedColumnName: 'id' })
   paymentMethod: PaymentMethod;
 

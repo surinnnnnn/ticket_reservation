@@ -35,9 +35,9 @@ export class Class {
   concert: Concert;
 
   /**
-   * 1 : 1 관계 설정
-   * @OneToOne
+   * 1 : M 관계 설정
+   * @OneToMany
    */
   @OneToOne(() => Seat, (seat) => seat.class)
-  seats: Seat;
+  seats: Seat[];
 }

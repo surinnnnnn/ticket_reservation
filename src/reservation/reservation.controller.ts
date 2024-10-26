@@ -1,9 +1,18 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { SearchService } from '../search/search.service';
 import { ReservationService } from './reservation.service';
 import { AuthGuard } from '@nestjs/passport';
 import { MakeReservationDto } from './dto/makeReservation.dto';
 import { GetSeatsDto } from './dto/getSeats.dto';
+import { DischargeDto } from './dto/dischargeAndRefund.dto';
 import { UserInfo } from 'src/utils/userInfo.decorator';
 import { User } from 'src/user/entities/user.entity';
 
@@ -35,6 +44,25 @@ export class ReservationController {
       makeReservationDto.schedule_id,
       makeReservationDto.seat_id,
       makeReservationDto.payment_method_id,
+    );
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('getReservations')
+  async getReservationInfos(@UserInfo() user: User) {
+    return await this.reservationService.getReservationInfos(user);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('discharge')
+  async cancelAndRefund(
+    @UserInfo() user: User,
+    @Body() dischargeDto: DischargeDto,
+  ) {
+    return await this.reservationService.cancelAndRefund(
+      user,
+      dischargeDto.payment_method_id,
+      dischargeDto.reservation_number,
     );
   }
 }

@@ -14,6 +14,7 @@ import { Seat } from '../admin/entities/seat.entity';
 import { Class } from '../admin/entities/class.entity';
 import { Payment } from './entities/payments.entity';
 import { Reservation } from './entities/reservations.entity';
+import { PaymentMethod } from '../user/entities/paymentMethod.entity';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { Reservation } from './entities/reservations.entity';
       Class,
       Payment,
       Reservation,
+      PaymentMethod,
     ]),
   ],
   providers: [ReservationService, SearchService],

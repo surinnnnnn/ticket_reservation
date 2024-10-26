@@ -38,10 +38,10 @@ export class Seat {
   hallReservation: HallReservation;
 
   /**
-   * 1 : 1 관계 설정
-   * @OneToOne
+   * m : 1 관계 설정
+   * @ManyToOne
    */
-  @OneToOne(() => Class, (classEntity) => classEntity.seats)
+  @ManyToOne(() => Class, (classEntity) => classEntity.seats)
   @JoinColumn({ name: 'class_id', referencedColumnName: 'id' })
   class: Class;
 

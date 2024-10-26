@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, SetMetadata, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 import { PostCategoryDto } from './dto/postCategory.dto';
@@ -8,12 +8,15 @@ import { PostClassDto } from './dto/postClass.dto';
 import { PostHallReservationDto } from './dto/postHallReservation.dto';
 
 import { AdminService } from './admin.service';
+import { RolesGuard } from 'src/auth/roles.gaurd';
+import { Role } from 'src/user/types/userRole.type';
 
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @SetMetadata('roles', [Role.Admin])
   @Post('postCategory')
   async postCategory(@Body() postCategoryDto: PostCategoryDto) {
     return await this.adminService.postCategory(
@@ -22,7 +25,8 @@ export class AdminController {
     );
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @SetMetadata('roles', [Role.Admin])
   @Post('postConcert')
   async postConcert(@Body() postConcertDto: PostConcertDto) {
     return await this.adminService.postConcert(
@@ -36,7 +40,8 @@ export class AdminController {
     );
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @SetMetadata('roles', [Role.Admin])
   @Post('postConcert')
   async postHallreservation(
     @Body() postHallreservationDto: PostHallReservationDto,
@@ -47,7 +52,8 @@ export class AdminController {
     );
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @SetMetadata('roles', [Role.Admin])
   @Post('postSeat')
   async postSeat(@Body() postSeatDto: PostSeatDto) {
     return await this.adminService.postSeat(
@@ -57,7 +63,8 @@ export class AdminController {
     );
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @SetMetadata('roles', [Role.Admin])
   @Post('postClass')
   async postClass(@Body() postClassDto: PostClassDto) {
     return await this.adminService.postClass(
