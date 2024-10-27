@@ -12,7 +12,7 @@ import { ReservationService } from './reservation.service';
 import { AuthGuard } from '@nestjs/passport';
 import { MakeReservationDto } from './dto/makeReservation.dto';
 import { GetSeatsDto } from './dto/getSeats.dto';
-import { DischargeDto } from './dto/dischargeAndRefund.dto';
+import { CancelDto } from './dto/cancel.dto.ts';
 import { UserInfo } from 'src/utils/userInfo.decorator';
 import { User } from 'src/user/entities/user.entity';
 
@@ -54,15 +54,12 @@ export class ReservationController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Delete('discharge')
-  async cancelAndRefund(
-    @UserInfo() user: User,
-    @Body() dischargeDto: DischargeDto,
-  ) {
+  @Delete('cancelAndRefund')
+  async cancelAndRefund(@UserInfo() user: User, @Body() cancleDto: CancelDto) {
     return await this.reservationService.cancelAndRefund(
       user,
-      dischargeDto.payment_method_id,
-      dischargeDto.reservation_number,
+      cancleDto.reservation_number,
+      cancleDto.payment_method_id,
     );
   }
 }

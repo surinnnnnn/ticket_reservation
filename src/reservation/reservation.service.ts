@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Repository, Transaction, DataSource } from 'typeorm';
+import { Repository, Transaction, DataSource, QueryRunner } from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
@@ -60,7 +60,6 @@ export class ReservationService {
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
-
     try {
       const findConcert = await this.concertRepository.findOne({
         where: { name: concert_name },
@@ -133,6 +132,8 @@ export class ReservationService {
       const savedReservation =
         await this.reservationRepository.save(reservation);
 
+      await queryRunner.commitTransaction();
+
       return {
         status_code: 201,
         message: '예약이 완료되었습니다.',
@@ -143,6 +144,130 @@ export class ReservationService {
         },
       };
     } catch (error) {
+      await queryRunner.rollbackTransaction();
+      console.error(error);
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /** 결제 내역 및 예매 정보 확인 함수
+   *
+   */
+  async getReservationInfos(user: User) {
+    try {
+      console.log(user);
+      const query = await this.paymentRepository
+        .createQueryBuilder('payment')
+        .leftJoinAndSelect('payment.reservation', 'reservation')
+        .leftJoinAndSelect('reservation.seat', 'seats')
+        .leftJoinAndSelect('seats.class', 'class')
+        .leftJoinAndSelect('seats.hallReservation', 'hallReservation')
+        .leftJoinAndSelect('hallReservation.schedule', 'schedule')
+        .leftJoinAndSelect('schedule.concert', 'concert')
+        .leftJoinAndSelect('hallReservation.hall', 'hall')
+        .where('payment.user_id = :id', { id: user.id })
+        .getMany();
+
+      let mappedInfos = query
+        .filter((info) => info.reservation)
+        .map((info) => ({
+          reservation_number: info.reservation.id,
+          content: info.reservation.seat.hallReservation.schedule.concert.name,
+          schedule: info.reservation.seat.hallReservation.schedule.date,
+          place: info.reservation.seat.hallReservation.hall.name,
+          seat: info.reservation.seat.id,
+          seat_class: info.reservation.seat.class.grade,
+          cost: info.cost,
+          card_approve_number: info.approve_number,
+          approvedAt: info.approvedAt,
+        }));
+
+      if (!query) {
+        mappedInfos = [];
+      }
+
+      return {
+        stateCode: 200,
+        user: `${user.nickname}(${user.account_id})님의 예매 내역`,
+        mappedInfos,
+      };
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  async cancelAndRefund(
+    user: User,
+    reservation_number: number,
+    payment_method_id: number,
+  ) {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const query = await this.reservationRepository
+        .createQueryBuilder('reservation')
+        .leftJoinAndSelect('reservation.payment', 'payment')
+        .leftJoinAndSelect('payment.paymentMethod', 'paymentMethod')
+        .leftJoinAndSelect('reservation.seat', 'seats')
+        .leftJoinAndSelect('seats.class', 'class')
+        .leftJoinAndSelect('seats.hallReservation', 'hallReservation')
+        .leftJoinAndSelect('hallReservation.schedule', 'schedule')
+        .leftJoinAndSelect('schedule.concert', 'concert')
+        .where('reservation.id = :reservationNumber', {
+          reservationNumber: reservation_number,
+        })
+        .andWhere('payment.user_id = :id', { id: user.id })
+        .andWhere('payment.method_id = :method_id', {
+          method_id: payment_method_id,
+        })
+        .getOne();
+
+      if (!query) {
+        throw new BadRequestException(
+          '등록하신 정보와 일치하는 예약 정보가 없습니다.',
+        );
+      }
+
+      const concertDate = new Date(query.seat.hallReservation.schedule.date);
+      const currDate = new Date();
+
+      const remainHours = 3 * 60 * 60 * 1000; // 3시간
+
+      if (concertDate.getTime() < currDate.getTime()) {
+        throw new Error('이미 상영되어 취소할 수 없습니다.');
+      }
+      if (concertDate.getTime() - currDate.getTime() <= remainHours) {
+        throw new Error('콘서트 시작 3시간 전에는 취소할 수 없습니다.');
+      }
+
+      //결제 취소 함수 호출
+      const cancelResult = await this.cancelPayment(query.payment.id);
+
+      if (!cancelResult) {
+        throw new Error('결제 취소에 실패했습니다. 다시 시도해주세요.');
+      }
+
+      //좌석 정보 업데이트
+      query.seat.state = '예매 가능';
+      await this.seatRepository.save(query.seat);
+
+      //reservation row 삭제
+      await this.reservationRepository.remove(query);
+
+      await queryRunner.commitTransaction();
+
+      return {
+        stateCode: 201,
+        message: '예매가 취소되었습니다.',
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
       console.error(error);
       throw error;
     } finally {
@@ -169,107 +294,11 @@ export class ReservationService {
     };
   }
 
-  /** 결제 내역 및 예매 정보 확인 함수
+  /** 임의 결체 취소 함수
    *
+   * @param payment_id
+   * @returns
    */
-  async getReservationInfos(user: User) {
-    try {
-      const query = await this.paymentRepository
-        .createQueryBuilder('payment')
-        .leftJoinAndSelect('payment.reservation', 'reservation')
-        .leftJoinAndSelect('reservation.seat', 'seats')
-        .leftJoinAndSelect('seats.class', 'class')
-        .leftJoinAndSelect('seats.hallReservation', 'hallReservation')
-        .leftJoinAndSelect('hallReservation.schedule', 'schedule')
-        .leftJoinAndSelect('schedule.concert', 'concert')
-        .leftJoinAndSelect('hallReservation.hall', 'hall')
-        .where('payment.user_id = :id', { id: user.id })
-        .getMany();
-
-      const mappedInfos = query.map((info) => ({
-        reservation_number: info.reservation.id,
-        content: info.reservation.seat.hallReservation.schedule.concert.name,
-        schedule: info.reservation.seat.hallReservation.schedule.date,
-        place: info.reservation.seat.hallReservation.hall.name,
-        seat: info.reservation.seat.id,
-        seat_class: info.reservation.seat.class.grade,
-        cost: info.cost,
-        card_approve_number: info.approve_number,
-        approvedAt: info.approvedAt,
-      }));
-
-      return {
-        stateCode: 200,
-        user: `${user.nickname}(${user.account_id})님의 예매 내역`,
-        mappedInfos,
-      };
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  }
-
-  async cancelAndRefund(
-    user: User,
-    reservation_number: number,
-    payment_method_id: number,
-  ) {
-    const query = await this.reservationRepository
-      .createQueryBuilder('reservation')
-      .leftJoinAndSelect('reservation.payment', 'payment')
-      .leftJoinAndSelect('payment.paymentMethod', 'paymentMethod')
-      .leftJoinAndSelect('reservation.seat', 'seats')
-      .leftJoinAndSelect('seats.class', 'class')
-      .leftJoinAndSelect('seats.hallReservation', 'hallReservation')
-      .leftJoinAndSelect('hallReservation.schedule', 'schedule')
-      .leftJoinAndSelect('schedule.concert', 'concert')
-      .where('reservation.id = :reservationNumber', {
-        reservationNumber: reservation_number,
-      })
-      .andWhere('payment.user_id = :id', { id: user.id })
-      .andWhere('paymentMethod.id = :method_id', {
-        method_id: payment_method_id,
-      })
-      .getOne();
-
-    if (!query) {
-      throw new BadRequestException(
-        '등록하신 정보와 일치하는 예약 정보가 없습니다.',
-      );
-    }
-
-    const concertDate = new Date(query.seat.hallReservation.schedule.date);
-    const currDate = new Date();
-
-    const remainHours = 3 * 60 * 60 * 1000; // 3시간
-
-    if (concertDate.getTime() < currDate.getTime()) {
-      throw new Error('이미 상영되어 취소할 수 없습니다.');
-    }
-    if (concertDate.getTime() - currDate.getTime() <= remainHours) {
-      throw new Error('콘서트 시작 3시간 전에는 취소할 수 없습니다.');
-    }
-
-    //결제 취소 함수 호출
-    const cancelResult = await this.cancelPayment(query.payment.id);
-
-    if (!cancelResult) {
-      throw new Error('결제 취소에 실패했습니다. 다시 시도해주세요.');
-    }
-
-    //좌석 정보 업데이트
-    query.seat.state = '예매 가능';
-    await this.seatRepository.save(query.seat);
-
-    //reservation row 삭제
-    await this.reservationRepository.remove(query);
-
-    return {
-      stateCode: 201,
-      message: '예매가 취소되었습니다.',
-    };
-  }
-
   async cancelPayment(payment_id: number) {
     const payment = await this.paymentRepository.findOne({
       where: { id: payment_id },
