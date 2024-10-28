@@ -19,7 +19,10 @@ import { Hall } from './admin/entities/hall.entity';
 import { HallReservation } from './admin/entities/hallReservation.entity';
 import { Seat } from './admin/entities/seat.entity';
 import { Class } from './admin/entities/class.entity';
+import { Payment } from './reservation/entities/payments.entity';
 import { SearchModule } from './search/search.module';
+import { ReservationModule } from './reservation/reservation.module';
+import { Reservation } from './reservation/entities/reservations.entity';
 
 const typeOrmModuleOptions = {
   useFactory: async (
@@ -43,6 +46,8 @@ const typeOrmModuleOptions = {
       HallReservation,
       Seat,
       Class,
+      Payment,
+      Reservation,
     ], // 엔티티는 반드시 여기에 명시!
     synchronize: configService.get('DB_SYNC'),
     logging: true,
@@ -70,6 +75,7 @@ const typeOrmModuleOptions = {
     CryptoModule,
     AdminModule,
     SearchModule,
+    ReservationModule,
   ],
   controllers: [],
   providers: [],

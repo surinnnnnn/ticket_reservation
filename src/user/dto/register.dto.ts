@@ -4,6 +4,7 @@ import {
   IsOptional,
   Length,
   Matches,
+  IsNumber,
 } from 'class-validator';
 
 export class RegisterDto {
@@ -38,6 +39,6 @@ export class RegisterDto {
   nickname: string;
 
   @IsOptional()
-  @IsString()
-  admin_number: string;
+  @IsNumber()
+  admin_number: number;
 }

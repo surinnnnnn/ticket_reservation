@@ -38,7 +38,7 @@ export class UserService {
     password: string,
     confirmed_password: string,
     nickname: string,
-    admin_number?: string,
+    admin_number?: number,
   ) {
     try {
       // 사용 중인 아이디
@@ -54,8 +54,10 @@ export class UserService {
 
       // 관리자 번호 입력 시 불일치
       const expectedAdminNumber =
-        this.configService.get<string>('ADMIN_NUMBER');
-      if (admin_number && admin_number !== expectedAdminNumber) {
+        this.configService.get<number>('ADMIN_NUMBER');
+      console.log(expectedAdminNumber);
+      console.log(admin_number);
+      if (admin_number && admin_number != expectedAdminNumber) {
         throw new BadRequestException('관리자 번호가 일치하지 않습니다.');
       }
 
@@ -135,7 +137,7 @@ export class UserService {
 
       const payload = { account_id, sub: user.id };
       const token = this.jwtService.sign(payload);
-      // res.header('authorization', `Bearer ${token}`);
+
       return {
         access_token: token,
       };

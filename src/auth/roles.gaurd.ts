@@ -15,7 +15,7 @@ export class RolesGuard extends AuthGuard('jwt') implements CanActivate {
     if (!authenticated) {
       return false;
     }
-
+    // 메타데이터 가져오기
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>('roles', [
       context.getHandler(),
       context.getClass(),
@@ -25,6 +25,7 @@ export class RolesGuard extends AuthGuard('jwt') implements CanActivate {
     }
 
     const { user } = context.switchToHttp().getRequest();
+    console.log('User:', user);
     return requiredRoles.some((role) => user.role === role);
   }
 }
