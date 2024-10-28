@@ -6,6 +6,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { SearchService } from '../search/search.service';
 import { ReservationService } from './reservation.service';
@@ -13,8 +14,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { MakeReservationDto } from './dto/makeReservation.dto';
 import { GetSeatsDto } from './dto/getSeats.dto';
 import { CancelDto } from './dto/cancel.dto.ts';
-import { UserInfo } from 'src/utils/userInfo.decorator';
+import { UserInfo } from 'src/common.utils/userInfo.decorator';
 import { User } from 'src/user/entities/user.entity';
+
+import { TransactionInterceptor } from '../common.utils/transaction.interceptor';
 
 @Controller('reservation')
 export class ReservationController {
@@ -33,6 +36,7 @@ export class ReservationController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(TransactionInterceptor)
   @Post('makeReservation')
   async makeReservation(
     @UserInfo() user: User,
@@ -54,6 +58,7 @@ export class ReservationController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(TransactionInterceptor)
   @Delete('cancelAndRefund')
   async cancelAndRefund(@UserInfo() user: User, @Body() cancleDto: CancelDto) {
     return await this.reservationService.cancelAndRefund(

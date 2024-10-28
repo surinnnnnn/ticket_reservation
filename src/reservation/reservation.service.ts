@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Scope,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,7 +17,7 @@ import { Reservation } from './entities/reservations.entity';
 import { User } from '../user/entities/user.entity';
 import { PaymentMethod } from 'src/user/entities/paymentMethod.entity';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class ReservationService {
   constructor(
     @InjectRepository(Concert)
@@ -56,10 +57,6 @@ export class ReservationService {
     seat_id: number,
     payment_method_id: number,
   ) {
-    const queryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
     try {
       const findConcert = await this.concertRepository.findOne({
         where: { name: concert_name },
@@ -132,8 +129,6 @@ export class ReservationService {
       const savedReservation =
         await this.reservationRepository.save(reservation);
 
-      await queryRunner.commitTransaction();
-
       return {
         status_code: 201,
         message: '예약이 완료되었습니다.',
@@ -144,11 +139,8 @@ export class ReservationService {
         },
       };
     } catch (error) {
-      await queryRunner.rollbackTransaction();
       console.error(error);
       throw error;
-    } finally {
-      await queryRunner.release();
     }
   }
 
@@ -204,11 +196,6 @@ export class ReservationService {
     reservation_number: number,
     payment_method_id: number,
   ) {
-    const queryRunner = this.dataSource.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     try {
       const query = await this.reservationRepository
         .createQueryBuilder('reservation')
@@ -260,18 +247,13 @@ export class ReservationService {
       //reservation row 삭제
       await this.reservationRepository.remove(query);
 
-      await queryRunner.commitTransaction();
-
       return {
         stateCode: 201,
         message: '예매가 취소되었습니다.',
       };
     } catch (error) {
-      await queryRunner.rollbackTransaction();
       console.error(error);
       throw error;
-    } finally {
-      await queryRunner.release();
     }
   }
 
