@@ -1,12 +1,4 @@
-import {
-  IsNotEmpty,
-  IsString,
-  IsDate,
-  IsNumber,
-  IsObject,
-  IsArray,
-} from 'class-validator';
-import { isNumber } from 'lodash';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 
 export class PostHallReservationDto {
   @IsNumber()

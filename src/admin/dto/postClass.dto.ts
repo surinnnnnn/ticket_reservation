@@ -1,11 +1,4 @@
-import {
-  IsNotEmpty,
-  IsString,
-  IsDate,
-  IsNumber,
-  IsObject,
-  IsArray,
-} from 'class-validator';
+import { IsNotEmpty, IsNumber, IsArray } from 'class-validator';
 
 export class PostClassDto {
   @IsNumber()

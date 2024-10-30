@@ -1,12 +1,10 @@
 import {
   Column,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  Unique,
 } from 'typeorm';
 import { Concert } from './concert.entity';
 import { HallReservation } from './hallReservation.entity';

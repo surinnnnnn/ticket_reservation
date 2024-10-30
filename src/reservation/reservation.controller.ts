@@ -46,7 +46,7 @@ export class ReservationController {
       user,
       makeReservationDto.concert_name,
       makeReservationDto.schedule_id,
-      makeReservationDto.seat_id,
+      makeReservationDto.seat_number,
       makeReservationDto.payment_method_id,
     );
   }

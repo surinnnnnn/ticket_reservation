@@ -48,7 +48,7 @@ const typeOrmModuleOptions = {
       Class,
       Payment,
       Reservation,
-    ], // 엔티티는 반드시 여기에 명시!
+    ],
     synchronize: configService.get('DB_SYNC'),
     logging: true,
   }),

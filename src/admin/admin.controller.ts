@@ -2,7 +2,7 @@ import { Body, Controller, Post, SetMetadata, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 import { PostCategoryDto } from './dto/postCategory.dto';
-import { PostConcertDto } from './dto/postConcert.dto'; // 철자 수정
+import { PostConcertDto } from './dto/postConcert.dto';
 import { PostSeatDto } from './dto/postSeat.dto';
 import { PostClassDto } from './dto/postClass.dto';
 import { PostHallReservationDto } from './dto/postHallReservation.dto';
@@ -59,6 +59,7 @@ export class AdminController {
     return await this.adminService.postSeat(
       postSeatDto.hall_reservation_id,
       postSeatDto.class_id,
+      postSeatDto.number,
       postSeatDto.concert_id,
     );
   }

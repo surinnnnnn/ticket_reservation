@@ -1,13 +1,10 @@
 import {
   Column,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
-  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
-  Unique,
 } from 'typeorm';
 
 import { Seat } from './seat.entity';
@@ -20,7 +17,7 @@ export class Class {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int', nullable: false })
+  @Column({ type: 'int', nullable: false, unique: true })
   grade: number;
 
   @Column({ type: 'int', nullable: false })

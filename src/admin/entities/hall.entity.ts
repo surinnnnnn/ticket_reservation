@@ -1,16 +1,6 @@
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Unique,
-} from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { HallReservation } from './hallReservation.entity';
-import { Seat } from './seat.entity';
 
 @Entity({
   name: 'halls',

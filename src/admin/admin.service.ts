@@ -1,16 +1,10 @@
-import { compare, hash } from 'bcrypt';
 import _ from 'lodash';
-import { Admin, Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import { CryptoService } from '../crypto/crypto.service';
-import { Role } from '../user/types/userRole.type';
+import { Repository } from 'typeorm';
 
 import {
   BadRequestException,
   ConflictException,
   Injectable,
-  InternalServerErrorException,
-  UnauthorizedException,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
@@ -206,6 +200,7 @@ export class AdminService {
   async postSeat(
     hall_reservation_id: number,
     class_id: number,
+    number: number,
     concert_id: number,
   ) {
     try {
@@ -215,6 +210,7 @@ export class AdminService {
       if (!findHallReservation) {
         throw new BadRequestException('공연 홀 예약 정보가 존재하지 않습니다.');
       }
+      // 이미 있는 좌석 번호 ...
 
       const findClass = await this.classRepository.findOne({
         where: { id: class_id },
@@ -231,6 +227,7 @@ export class AdminService {
       const newSeat = this.seatRepository.create({
         hallReservation: findHallReservation,
         class: findClass,
+        number: number,
       });
       return await this.seatRepository.save(newSeat);
     } catch (error) {
@@ -256,6 +253,17 @@ export class AdminService {
 
       if (!findConcert) {
         throw new BadRequestException('해당 공연이 존재하지 않습니다.');
+      }
+
+      // 중복 저장 방지
+      for (const priceAndGrade of price_by_grade) {
+        const findClass = await this.classRepository.findOne({
+          where: { grade: priceAndGrade.grade },
+        });
+
+        if (findClass) {
+          throw new ConflictException('이미 등록된 등급입니다.');
+        }
       }
 
       for (const priceAndGrade of price_by_grade) {

@@ -1,10 +1,8 @@
 import {
   Entity,
-  Column,
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
-  OneToMany,
   OneToOne,
 } from 'typeorm';
 import { Payment } from './payments.entity';

@@ -1,17 +1,13 @@
 import {
   Column,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
-  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
-  Unique,
 } from 'typeorm';
 
 import { Class } from './class.entity';
-import { isString } from 'lodash';
 import { HallReservation } from './hallReservation.entity';
 import { Reservation } from 'src/reservation/entities/reservations.entity';
 
@@ -21,6 +17,9 @@ import { Reservation } from 'src/reservation/entities/reservations.entity';
 export class Seat {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ type: 'int', nullable: false })
+  number: number;
 
   @Column({
     type: 'enum',

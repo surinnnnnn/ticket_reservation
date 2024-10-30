@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Repository, Transaction, DataSource, QueryRunner } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
@@ -17,7 +17,7 @@ import { Reservation } from './entities/reservations.entity';
 import { User } from '../user/entities/user.entity';
 import { PaymentMethod } from 'src/user/entities/paymentMethod.entity';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable({ scope: Scope.REQUEST }) // 요청 마다 인스턴스 따로 생성
 export class ReservationService {
   constructor(
     @InjectRepository(Concert)
@@ -54,7 +54,7 @@ export class ReservationService {
     user: User,
     concert_name: string,
     schedule_id: number,
-    seat_id: number,
+    seat_number: number,
     payment_method_id: number,
   ) {
     try {
@@ -77,14 +77,26 @@ export class ReservationService {
       const findSeat = await this.seatRepository
         .createQueryBuilder('seat')
         .leftJoinAndSelect('seat.class', 'class')
-        .where('seat.id = :seat_id', { seat_id })
-        .select(['seat.state', 'class.id', 'class.grade', 'class.price'])
+        .leftJoinAndSelect('seat.hallReservation', 'hallReservation')
+        .leftJoinAndSelect('hallReservation.schedule', 'schedule')
+        .where('seat.number = :seat_number', { seat_number })
+        .andWhere('schedule.id = :schedule_id', { schedule_id })
+        .select([
+          'seat.id',
+          'seat.state',
+          'class.id',
+          'class.grade',
+          'class.price',
+        ])
+        .setLock('pessimistic_write')
         .getOne();
       if (!findSeat) {
         throw new BadRequestException({
           message: '해당 좌석이 존재하지 않습니다.',
         });
       }
+
+      console.log(findSeat.id);
       if (findSeat.state === '예매 불가') {
         throw new ConflictException('이미 선택된 좌석입니다.');
       }
@@ -92,7 +104,7 @@ export class ReservationService {
       //결제요청
       const paymentRequest = {
         concert_name: concert_name,
-        seat_id: seat_id,
+        seat_id: findSeat.id,
         amount: findSeat.class.price,
         method_id: payment_method_id,
       };
@@ -104,8 +116,10 @@ export class ReservationService {
         );
       }
 
-      findSeat.state = '예매 불가';
-      await this.seatRepository.update(seat_id, { state: findSeat.state });
+      await this.seatRepository.update(
+        { id: findSeat.id },
+        { state: '예매 불가' },
+      );
 
       //결제 내역 저장
       const payment = this.paymentRepository.create({
@@ -121,7 +135,7 @@ export class ReservationService {
 
       //예약 정보 저장
       const reservation = this.reservationRepository.create({
-        seat: { id: seat_id },
+        seat: { id: findSeat.id },
         concert: { id: findConcert.id },
         payment: { id: savedPayment.id },
       });
@@ -135,7 +149,7 @@ export class ReservationService {
         reservation_info: {
           concert_name,
           date: findSchedule.date,
-          seat_id: seat_id,
+          seat_number,
         },
       };
     } catch (error) {
@@ -169,7 +183,7 @@ export class ReservationService {
           content: info.reservation.seat.hallReservation.schedule.concert.name,
           schedule: info.reservation.seat.hallReservation.schedule.date,
           place: info.reservation.seat.hallReservation.hall.name,
-          seat: info.reservation.seat.id,
+          seat_number: info.reservation.seat.number,
           seat_class: info.reservation.seat.class.grade,
           cost: info.cost,
           card_approve_number: info.approve_number,

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsDate, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 export class CancelDto {
   @IsNumber()
   @IsNotEmpty({ message: '예약 번호를 입력 하세요.' })
