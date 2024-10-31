@@ -99,6 +99,10 @@ export class SearchService {
         .where('concert.name = :name', { name: concert_name })
         .getOne();
 
+      if (!concert) {
+        throw new BadRequestException('해당 공연이 존재하지 않습니다.');
+      }
+
       const mappedConcert = {
         image: concert.image,
         name: concert.name,
@@ -111,9 +115,7 @@ export class SearchService {
       return { statusCode: 200, mappedConcert };
     } catch (error) {
       console.error(error);
-      throw new InternalServerErrorException(
-        '공연 목록 조회 중 서버 오류가 발생했습니다.',
-      );
+      throw error;
     }
   }
 

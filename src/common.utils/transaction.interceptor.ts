@@ -19,10 +19,11 @@ export class TransactionInterceptor implements NestInterceptor {
   ): Promise<Observable<any>> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
+    const entityManager = queryRunner.manager;
     await queryRunner.startTransaction('READ COMMITTED');
 
     const request = context.switchToHttp().getRequest();
-    request.queryRunnerManager = queryRunner.manager;
+    request.entityManager = entityManager;
 
     return next.handle().pipe(
       catchError(async (error) => {
