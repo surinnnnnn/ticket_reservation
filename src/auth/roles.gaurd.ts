@@ -1,4 +1,4 @@
-import { Role } from 'src/user/types/userRole.type';
+import { Role } from '../user/types/userRole.type';
 
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';

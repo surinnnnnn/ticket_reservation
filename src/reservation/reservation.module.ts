@@ -4,7 +4,7 @@ import { ReservationController } from './reservation.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SearchService } from 'src/search/search.service';
+import { SearchService } from '../search/search.service';
 
 import { ConcertCategory } from '../admin/entities/concertCategory.enitity';
 import { Concert } from '../admin/entities/concert.entity';

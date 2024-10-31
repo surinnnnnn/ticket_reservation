@@ -8,7 +8,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
-import { Payment } from 'src/reservation/entities/payments.entity';
+import { Payment } from '../../reservation/entities/payments.entity';
 
 @Entity('payment_methods')
 export class PaymentMethod {

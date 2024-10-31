@@ -8,8 +8,8 @@ import { PostClassDto } from './dto/postClass.dto';
 import { PostHallReservationDto } from './dto/postHallReservation.dto';
 
 import { AdminService } from './admin.service';
-import { RolesGuard } from 'src/auth/roles.gaurd';
-import { Role } from 'src/user/types/userRole.type';
+import { RolesGuard } from '../auth/roles.gaurd';
+import { Role } from '../user/types/userRole.type';
 
 @Controller('admin')
 export class AdminController {

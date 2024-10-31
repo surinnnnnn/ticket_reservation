@@ -5,6 +5,7 @@ import {
   Get,
   Post,
   Query,
+  Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -14,9 +15,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { MakeReservationDto } from './dto/makeReservation.dto';
 import { GetSeatsDto } from './dto/getSeats.dto';
 import { CancelDto } from './dto/cancel.dto.ts';
-import { UserInfo } from 'src/common.utils/userInfo.decorator';
-import { User } from 'src/user/entities/user.entity';
-
+import { UserInfo } from '../common.utils/userInfo.decorator';
+import { User } from '../user/entities/user.entity';
 import { TransactionInterceptor } from '../common.utils/transaction.interceptor';
 
 @Controller('reservation')

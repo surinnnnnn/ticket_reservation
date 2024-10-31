@@ -3,11 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   InternalServerErrorException,
-  Query,
-  UnauthorizedException,
 } from '@nestjs/common';
 
 import { ConcertCategory } from '../admin/entities/concertCategory.enitity';
@@ -16,7 +13,6 @@ import { Schedule } from '../admin/entities/schedules.entity';
 import { Hall } from '../admin/entities/hall.entity';
 import { Seat } from '../admin/entities/seat.entity';
 import { Class } from '../admin/entities/class.entity';
-import { HallReservation } from 'src/admin/entities/hallReservation.entity';
 
 @Injectable()
 export class SearchService {
@@ -73,9 +69,9 @@ export class SearchService {
     try {
       const concerts = await this.concertCategoryRepository
         .createQueryBuilder('concertCategory')
-        .leftJoinAndSelect('concertCategory.concert', 'concert') // 시리즈 및 카테고리
-        .leftJoinAndSelect('concertCategory.category', 'category') // 카테고리 상세
-        .leftJoinAndSelect('concert.schedules', 'schedules') // 스케줄
+        .leftJoinAndSelect('concertCategory.concert', 'concert')
+        .leftJoinAndSelect('concertCategory.category', 'category')
+        .leftJoinAndSelect('concert.schedules', 'schedules')
         .getMany();
 
       const mappedConcerts = concerts.map((concert) => ({
@@ -121,7 +117,7 @@ export class SearchService {
     }
   }
 
-  async fetchConcertDetails(concert_name: string, schedule_id?: number) {
+  async getConcertDetails(concert_name: string, schedule_id?: number) {
     const query = this.concertRepository
       .createQueryBuilder('concert')
       .leftJoinAndSelect('concert.concertCategories', 'concertCategories')
@@ -134,7 +130,9 @@ export class SearchService {
       .where('concert.name = :name', { name: concert_name });
 
     if (schedule_id) {
-      query.andWhere('schedule.id = :schedule', { schedule: schedule_id });
+      query
+        .andWhere('schedule.id = :schedule', { schedule: schedule_id })
+        .andWhere('seat.state = :state', { state: '예매 가능' });
     }
     const concert = await query.getOne();
 
@@ -147,7 +145,7 @@ export class SearchService {
 
   async searchConcertDetails(concert_name: string) {
     try {
-      const concert = await this.fetchConcertDetails(concert_name);
+      const concert = await this.getConcertDetails(concert_name);
       const mappedConcert = {
         id: concert.id,
         Image: concert.image,
@@ -163,7 +161,7 @@ export class SearchService {
               reservation.seats.some((seat) => seat.state === '예매 가능'),
           )
             ? '예매 가능'
-            : '예매 불가';
+            : '매진';
 
           return {
             date: schedule.date,
@@ -193,7 +191,7 @@ export class SearchService {
    */
   async getConcertSeats(concert_name: string, schedule_id: number) {
     try {
-      const concert = await this.fetchConcertDetails(concert_name, schedule_id);
+      const concert = await this.getConcertDetails(concert_name, schedule_id);
 
       const mappedSeats = {
         name: concert.name,

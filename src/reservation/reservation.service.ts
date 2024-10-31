@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
@@ -15,9 +15,9 @@ import { Seat } from '../admin/entities/seat.entity';
 import { Payment } from './entities/payments.entity';
 import { Reservation } from './entities/reservations.entity';
 import { User } from '../user/entities/user.entity';
-import { PaymentMethod } from 'src/user/entities/paymentMethod.entity';
+import { PaymentMethod } from '../user/entities/paymentMethod.entity';
 
-@Injectable({ scope: Scope.REQUEST }) // 요청 마다 인스턴스 따로 생성
+@Injectable()
 export class ReservationService {
   constructor(
     @InjectRepository(Concert)
@@ -88,7 +88,6 @@ export class ReservationService {
           'class.grade',
           'class.price',
         ])
-        .setLock('pessimistic_write')
         .getOne();
       if (!findSeat) {
         throw new BadRequestException({

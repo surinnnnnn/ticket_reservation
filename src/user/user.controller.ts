@@ -1,4 +1,4 @@
-import { UserInfo } from 'src/common.utils/userInfo.decorator';
+import { UserInfo } from '../common.utils/userInfo.decorator';
 
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';

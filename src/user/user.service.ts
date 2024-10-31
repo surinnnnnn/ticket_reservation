@@ -1,6 +1,6 @@
 import { compare, hash } from 'bcrypt';
 import _ from 'lodash';
-import { Admin, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { CryptoService } from '../crypto/crypto.service';
 import { Role } from './types/userRole.type';
@@ -9,7 +9,6 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';

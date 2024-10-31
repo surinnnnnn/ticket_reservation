@@ -9,7 +9,7 @@ import {
 
 import { Class } from './class.entity';
 import { HallReservation } from './hallReservation.entity';
-import { Reservation } from 'src/reservation/entities/reservations.entity';
+import { Reservation } from '../../reservation/entities/reservations.entity';
 
 @Entity({
   name: 'seats',

@@ -2,7 +2,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { ConcertCategory } from './concertCategory.enitity';
 import { Schedule } from './schedules.entity';
 import { Class } from './class.entity';
-import { Reservation } from 'src/reservation/entities/reservations.entity';
+import { Reservation } from '../../reservation/entities/reservations.entity';
 
 @Entity({
   name: 'concerts',

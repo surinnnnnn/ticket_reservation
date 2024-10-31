@@ -6,8 +6,8 @@ import {
   OneToOne,
 } from 'typeorm';
 import { Payment } from './payments.entity';
-import { Seat } from 'src/admin/entities/seat.entity';
-import { Concert } from 'src/admin/entities/concert.entity';
+import { Seat } from '../../admin/entities/seat.entity';
+import { Concert } from '../../admin/entities/concert.entity';
 
 @Entity('reservations')
 export class Reservation {
