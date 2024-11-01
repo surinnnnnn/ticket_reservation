@@ -1,3 +1,4 @@
+import { Request } from 'express';
 import {
   Body,
   Controller,
@@ -39,10 +40,12 @@ export class ReservationController {
   @UseInterceptors(TransactionInterceptor)
   @Post('makeReservation')
   async makeReservation(
+    @Req() request: Request,
     @UserInfo() user: User,
     @Body() makeReservationDto: MakeReservationDto,
   ) {
     return await this.reservationService.makeReservation(
+      request.entityManager,
       user,
       makeReservationDto.concert_name,
       makeReservationDto.schedule_id,

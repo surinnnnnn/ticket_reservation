@@ -4,7 +4,6 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  Scope,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
@@ -51,6 +50,7 @@ export class ReservationService {
    * @returns
    */
   async makeReservation(
+    entityManager: EntityManager,
     user: User,
     concert_name: string,
     schedule_id: number,
@@ -58,7 +58,7 @@ export class ReservationService {
     payment_method_id: number,
   ) {
     try {
-      const findConcert = await this.concertRepository.findOne({
+      const findConcert = await entityManager.findOne(Concert, {
         where: { name: concert_name },
       });
       if (!findConcert) {
@@ -67,14 +67,15 @@ export class ReservationService {
         );
       }
 
-      const findSchedule = await this.scheduleRepository.findOne({
+      const findSchedule = await entityManager.findOne(Schedule, {
         where: { id: schedule_id },
       });
       if (!findSchedule) {
         throw new BadRequestException('존재 하지 않는 스케쥴입니다.');
       }
 
-      const findSeat = await this.seatRepository
+      const findSeat = await entityManager
+        .getRepository(Seat)
         .createQueryBuilder('seat')
         .leftJoinAndSelect('seat.class', 'class')
         .leftJoinAndSelect('seat.hallReservation', 'hallReservation')
@@ -88,19 +89,17 @@ export class ReservationService {
           'class.grade',
           'class.price',
         ])
+        .setLock('pessimistic_write')
         .getOne();
       if (!findSeat) {
-        throw new BadRequestException({
-          message: '해당 좌석이 존재하지 않습니다.',
-        });
+        throw new BadRequestException('해당 좌석이 존재하지 않습니다.');
       }
 
-      console.log(findSeat.id);
       if (findSeat.state === '예매 불가') {
         throw new ConflictException('이미 선택된 좌석입니다.');
       }
 
-      //결제요청
+      // 결제 요청
       const paymentRequest = {
         concert_name: concert_name,
         seat_id: findSeat.id,
@@ -115,13 +114,11 @@ export class ReservationService {
         );
       }
 
-      await this.seatRepository.update(
-        { id: findSeat.id },
-        { state: '예매 불가' },
-      );
+      // 좌석 상태 업데이트
+      await entityManager.update(Seat, findSeat.id, { state: '예매 불가' });
 
-      //결제 내역 저장
-      const payment = this.paymentRepository.create({
+      // 결제 내역 저장
+      const payment = entityManager.create(Payment, {
         cost: findSeat.class.price,
         paymentMethod: { id: payment_method_id },
         state: '결제 완료',
@@ -130,17 +127,16 @@ export class ReservationService {
         approvedAt: paymentResult.approve_time,
       });
 
-      const savedPayment = await this.paymentRepository.save(payment);
+      const savedPayment = await entityManager.save(payment);
 
-      //예약 정보 저장
-      const reservation = this.reservationRepository.create({
+      // 예약 정보 저장
+      const reservation = entityManager.create(Reservation, {
         seat: { id: findSeat.id },
         concert: { id: findConcert.id },
         payment: { id: savedPayment.id },
       });
 
-      const savedReservation =
-        await this.reservationRepository.save(reservation);
+      await entityManager.save(reservation);
 
       return {
         status_code: 201,
@@ -240,17 +236,21 @@ export class ReservationService {
       const remainHours = 3 * 60 * 60 * 1000; // 3시간
 
       if (concertDate.getTime() < currDate.getTime()) {
-        throw new Error('이미 상영되어 취소할 수 없습니다.');
+        throw new ConflictException('이미 상영되어 취소할 수 없습니다.');
       }
       if (concertDate.getTime() - currDate.getTime() <= remainHours) {
-        throw new Error('콘서트 시작 3시간 전에는 취소할 수 없습니다.');
+        throw new ConflictException(
+          '콘서트 시작 3시간 전에는 취소할 수 없습니다.',
+        );
       }
 
       //결제 취소 함수 호출
       const cancelResult = await this.cancelPayment(query.payment.id);
 
       if (!cancelResult) {
-        throw new Error('결제 취소에 실패했습니다. 다시 시도해주세요.');
+        throw new ConflictException(
+          '결제 취소에 실패했습니다. 다시 시도해주세요.',
+        );
       }
 
       //좌석 정보 업데이트
