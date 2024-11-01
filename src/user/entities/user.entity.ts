@@ -10,6 +10,7 @@ import {
 import { Role } from '../types/userRole.type';
 import { PaymentMethod } from './paymentMethod.entity';
 import { Payment } from '../../reservation/entities/payments.entity';
+import { ApiParam, ApiProperty } from '@nestjs/swagger';
 
 @Index('account_id', ['account_id'], { unique: true }) //@index(인덱스명, [인덱스 지정할 컬럼명])
 @Entity({
